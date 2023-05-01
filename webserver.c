@@ -154,14 +154,16 @@ char* create_response(char* path) {
     char* file_string = read_file(path);
 
     char* MIME_type = "text/plain";
-    if (strstr(path, ".css")) {
+    if (strstr(path, ".css") != NULL) {
         MIME_type = "text/css";
-    } else if (strstr(path, ".html")) {
+    } else if (strstr(path, ".html") != NULL) {
         MIME_type = "text/html";
-    } else if (strstr(path, ".json")) {
+    } else if (strstr(path, ".json") != NULL) {
         MIME_type = "text/json";
-    } else if (strstr(path, ".js")) {
+    } else if (strstr(path, ".js") != NULL) {
         MIME_type = "text/javascript";
+    } else if (strcmp(path, "/home/anirvinv/projects/webserver") == 0) {
+        MIME_type = "text/html";
     }
 
     int content_length = strlen(file_string);
