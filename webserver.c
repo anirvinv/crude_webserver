@@ -153,14 +153,25 @@ char* read_file(char* path) {
 char* create_response(char* path) {
     char* file_string = read_file(path);
 
+    char* MIME_type = "text/plain";
+    if (strstr(path, ".css")) {
+        MIME_type = "text/css";
+    } else if (strstr(path, ".html")) {
+        MIME_type = "text/html";
+    } else if (strstr(path, ".json")) {
+        MIME_type = "text/json";
+    } else if (strstr(path, ".js")) {
+        MIME_type = "text/javascript";
+    }
+
     int content_length = strlen(file_string);
 
     char headers[150];
 
     sprintf(headers,
             "HTTP/1.1 %d OK\nServer: Anirvin's Server\nContent-Type: "
-            "text/html\nContent-Length: %d\nConnection: close\n\n",
-            response_status, content_length);
+            "%s\nContent-Length: %d\nConnection: close\n\n",
+            response_status, MIME_type, content_length);
 
     int len = strlen(headers) + strlen(file_string) + 1;
     char* response = (char*)malloc(strlen(headers) + strlen(file_string) + 1);
@@ -268,6 +279,9 @@ void sig_handler(int signum) {
 int main() {
     signal(SIGINT, sig_handler);
     signal(SIGQUIT, sig_handler);
+
+    printf("Starting server...\n");
+
     open_webserver();
     return 0;
 }
