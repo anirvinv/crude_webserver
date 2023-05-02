@@ -285,29 +285,18 @@ int open_webserver() {
     pthread_t worker_threads[100];
     int worker_thread_ptr = 0;
 
-    while (!sig_recieved && (cfd = accept(sfd, &addr, &addrlen)) != -1) {
+    while (!sig_recieved) {
+        int cfd = accept(sfd, &addr, &addrlen);
         if (cfd == -1) {
-            return 1;
+            exit(EXIT_FAILURE);
         }
-        printf("Connection happened\n");
+        printf("Connected to %d\n", cfd);
+
+        int* p_cfd = (int*)malloc(sizeof(int));
+        *p_cfd = cfd;
+
         pthread_create(&worker_threads[worker_thread_ptr++], NULL,
-                       &handle_connection, &cfd);
-
-        // char* request = (char*)malloc(MAX_REQUEST_SIZE + 1);
-        // read(cfd, request, MAX_REQUEST_SIZE);
-        // request[MAX_REQUEST_SIZE] = '\0';
-        // printf("REQUEST:\n%s\n", request);
-
-        // char* path = get_requested_resource_path(request);
-
-        // printf("PATH:\n%s\n", path);
-
-        // char* response = create_response(path);
-        // send(cfd, response, sizeof(char) * strlen(response), 0);
-
-        // free(request);
-        // free(response);
-
+                       &handle_connection, p_cfd);
         if (worker_thread_ptr >= 50) {
             worker_thread_ptr = 0;
             while (worker_thread_ptr < 50) {
@@ -322,32 +311,44 @@ int open_webserver() {
 void* handle_connection(void* arg) {
     int response_code = 200;
 
-    int client_file_descriptor = *(int*)arg;
+    int client_file_descriptor = *((int*)arg);
+
+    pthread_mutex_lock(&mutex);
+    free(arg);
+    pthread_mutex_unlock(&mutex);
 
     pthread_mutex_lock(&mutex);
     char* request = (char*)malloc(MAX_REQUEST_SIZE + 1);
     pthread_mutex_unlock(&mutex);
 
     read(client_file_descriptor, request, MAX_REQUEST_SIZE);
-    request[MAX_REQUEST_SIZE] = '\0';
+    for (int i = 0; i < MAX_REQUEST_SIZE; i++) {
+        if (request[i] < 0 || request[i] > 127) {
+            request[i] = '\0';
+            break;
+        }
+    }
+    // request[MAX_REQUEST_SIZE] = '\0';
 
     if (strstr(request, "GET") == NULL) {
         return NULL;
     }
 
-    printf("REQUEST:\n%s\n", request);
+    printf("REQUEST:\n%s\n\n", request);
 
     pthread_mutex_lock(&mutex);
     char* path = get_requested_resource_path(request);
     pthread_mutex_unlock(&mutex);
 
-    printf("PATH:\n%s\n", path);
+    printf("RESOURCE PATH:\n%s\n\n", path);
 
     pthread_mutex_lock(&mutex);
     char* response = create_response(path, &response_code);
     pthread_mutex_unlock(&mutex);
 
     send(client_file_descriptor, response, sizeof(char) * strlen(response), 0);
+
+    close(client_file_descriptor);
 
     pthread_mutex_lock(&mutex);
     free(request);
