@@ -1,7 +1,7 @@
 # Simple webserver
 
 ## Before running
-1. You might need to run `chmod +x start.sh`
+1. You might need to run `chmod +x start.sh` and `chmod +x runtests.sh`
 
 ## Building and Running Instructions
 1. To run the singlethreaded server, `./start.sh S`
