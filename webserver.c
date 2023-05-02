@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int response_status = 200;
 bool sig_recieved = false;
 int MAX_REQUEST_SIZE = 1500;
 
@@ -22,9 +21,9 @@ char* get_requested_resource_path(char* request);
 
 char* read_dir(const char* path);
 
-char* read_file(char* path);
+char* read_file(char* path, int* response_code);
 
-char* create_response(char* path);
+char* create_response(char* path, int* response_code);
 
 int open_webserver();
 
@@ -139,7 +138,7 @@ char* read_dir(const char* path) {
     return page_string;
 }
 
-char* read_file(char* path) {
+char* read_file(char* path, int* response_status) {
     char* dir_string = read_dir(path);
     if (dir_string != NULL) {
         return dir_string;
@@ -150,7 +149,7 @@ char* read_file(char* path) {
     if (fp == NULL) {
         char* buffer = (char*)malloc(20 * sizeof(char));
         char* not_found_msg = "Page not found";
-        response_status = 404;
+        *response_status = 404;
         int i = 0;
         for (; i < strlen(not_found_msg); i++) {
             buffer[i] = not_found_msg[i];
@@ -158,7 +157,7 @@ char* read_file(char* path) {
         buffer[i] = '\0';
         return buffer;
     }
-    response_status = 200;
+    *response_status = 200;
     int buffer_size = 2;
     char* buffer = (char*)malloc(2 * sizeof(char));
     char c;
@@ -189,8 +188,8 @@ char* read_file(char* path) {
     return buffer;
 }
 
-char* create_response(char* path) {
-    char* file_string = read_file(path);
+char* create_response(char* path, int* response_code) {
+    char* file_string = read_file(path, response_code);
 
     char* MIME_type = "text/plain";
     if (strstr(path, ".css") != NULL) {
@@ -212,7 +211,7 @@ char* create_response(char* path) {
     sprintf(headers,
             "HTTP/1.1 %d OK\nServer: Anirvin's Server\nContent-Type: "
             "%s\nContent-Length: %d\nConnection: close\n\n",
-            response_status, MIME_type, content_length);
+            *response_code, MIME_type, content_length);
 
     int len = strlen(headers) + strlen(file_string) + 1;
     char* response = (char*)malloc(strlen(headers) + strlen(file_string) + 1);
@@ -321,6 +320,8 @@ int open_webserver() {
 }
 
 void* handle_connection(void* arg) {
+    int response_code = 200;
+
     int client_file_descriptor = *(int*)arg;
 
     pthread_mutex_lock(&mutex);
@@ -343,7 +344,7 @@ void* handle_connection(void* arg) {
     printf("PATH:\n%s\n", path);
 
     pthread_mutex_lock(&mutex);
-    char* response = create_response(path);
+    char* response = create_response(path, &response_code);
     pthread_mutex_unlock(&mutex);
 
     send(client_file_descriptor, response, sizeof(char) * strlen(response), 0);
