@@ -1,6 +1,6 @@
-all: mthread_server.c sthread_server.c
-	gcc mthread_server.c -std=gnu99 -lpthread -fsanitize=address -o mthread_server.out
-	gcc sthread_server.c -std=gnu99 -lpthread -fsanitize=address -o sthread_server.out
+all: src/mthread_server.c src/sthread_server.c
+	gcc src/mthread_server.c -std=gnu99 -lpthread -fsanitize=address -o builds/mthread_server.out
+	gcc src/sthread_server.c -std=gnu99 -lpthread -fsanitize=address -o builds/sthread_server.out
 clean:
-	rm mthread_server.out
-	rm sthread_server.out
+	rm builds/mthread_server.out
+	rm builds/sthread_server.out

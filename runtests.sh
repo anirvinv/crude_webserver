@@ -1,1 +1,3 @@
-python3 test/client.py
+#!/bin/bash
+
+python3 tests/client.py

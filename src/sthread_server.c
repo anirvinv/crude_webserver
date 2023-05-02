@@ -8,7 +8,7 @@ int main() {
     signal(SIGINT, sig_handler);
     signal(SIGQUIT, sig_handler);
 
-    printf("Starting server...\n");
+    printf("Starting server on port 3000\n");
 
     open_webserver();
     return 0;

@@ -5,15 +5,8 @@ import requests
 def main():
     URLs = [
         "http://localhost:3000/",
-        "http://localhost:3000/.gitignore",
-        "http://localhost:3000/index.html",
-        "http://localhost:3000/client.c",
-        "http://localhost:3000/makefile",
-        "http://localhost:3000/README.md",
         "http://localhost:3000/something.html",
-        "http://localhost:3000/runtests.sh",
-        "http://localhost:3000/sthread_server.c",
-        "http://localhost:3000/mthread_server.c",
+        "http://localhost:3000/index.html",
     ] * 50
     start_time = time.perf_counter()
     for idx, URL in enumerate(URLs):
