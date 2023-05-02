@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <netdb.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -16,6 +17,44 @@ int MAX_REQUEST_SIZE = 1500;
 int server_file_descriptor = -1;
 
 char absolute_path[PATH_MAX];
+
+char* get_requested_resource_path(char* request);
+
+char* read_dir(const char* path);
+
+char* read_file(char* path);
+
+char* create_response(char* path);
+
+int open_webserver();
+
+void* handle_connection(void* arg);
+
+void sig_handler(int signum);
+
+pthread_mutex_t mutex;
+int main() {
+    pthread_mutex_init(&mutex, NULL);
+
+    signal(SIGINT, sig_handler);
+    signal(SIGQUIT, sig_handler);
+
+    printf("Starting server...\n");
+
+    open_webserver();
+    return 0;
+}
+
+void sig_handler(int signum) {
+    printf("\nCAUGHT\n");
+    sig_recieved = true;
+    if (server_file_descriptor != -1) {
+        printf("Closing socket\n");
+        close(server_file_descriptor);
+        _exit(0);
+    }
+    _exit(1);
+}
 
 char* get_requested_resource_path(char* request) {
     int ptr = 0;
@@ -243,47 +282,76 @@ int open_webserver() {
     struct sockaddr addr;
     socklen_t addrlen;
     int cfd;
+
+    pthread_t worker_threads[100];
+    int worker_thread_ptr = 0;
+
     while (!sig_recieved && (cfd = accept(sfd, &addr, &addrlen)) != -1) {
         if (cfd == -1) {
             return 1;
         }
+        printf("Connection happened\n");
+        pthread_create(&worker_threads[worker_thread_ptr++], NULL,
+                       &handle_connection, &cfd);
 
-        char* request = (char*)malloc(MAX_REQUEST_SIZE + 1);
-        read(cfd, request, MAX_REQUEST_SIZE);
-        request[MAX_REQUEST_SIZE] = '\0';
-        printf("REQUEST:\n%s\n", request);
+        // char* request = (char*)malloc(MAX_REQUEST_SIZE + 1);
+        // read(cfd, request, MAX_REQUEST_SIZE);
+        // request[MAX_REQUEST_SIZE] = '\0';
+        // printf("REQUEST:\n%s\n", request);
 
-        char* path = get_requested_resource_path(request);
+        // char* path = get_requested_resource_path(request);
 
-        printf("PATH:\n%s\n", path);
+        // printf("PATH:\n%s\n", path);
 
-        char* response = create_response(path);
-        send(cfd, response, sizeof(char) * strlen(response), 0);
+        // char* response = create_response(path);
+        // send(cfd, response, sizeof(char) * strlen(response), 0);
 
-        free(request);
-        free(response);
-        // free(path);
+        // free(request);
+        // free(response);
+
+        if (worker_thread_ptr >= 50) {
+            worker_thread_ptr = 0;
+            while (worker_thread_ptr < 50) {
+                pthread_join(worker_threads[worker_thread_ptr++], NULL);
+            }
+            worker_thread_ptr = 0;
+        }
     }
     close(sfd);
 }
 
-void sig_handler(int signum) {
-    printf("\nCAUGHT\n");
-    sig_recieved = true;
-    if (server_file_descriptor != -1) {
-        printf("Closing socket\n");
-        close(server_file_descriptor);
-        _exit(0);
+void* handle_connection(void* arg) {
+    int client_file_descriptor = *(int*)arg;
+
+    pthread_mutex_lock(&mutex);
+    char* request = (char*)malloc(MAX_REQUEST_SIZE + 1);
+    pthread_mutex_unlock(&mutex);
+
+    read(client_file_descriptor, request, MAX_REQUEST_SIZE);
+    request[MAX_REQUEST_SIZE] = '\0';
+
+    if (strstr(request, "GET") == NULL) {
+        return NULL;
     }
-    _exit(1);
-}
 
-int main() {
-    signal(SIGINT, sig_handler);
-    signal(SIGQUIT, sig_handler);
+    printf("REQUEST:\n%s\n", request);
 
-    printf("Starting server...\n");
+    pthread_mutex_lock(&mutex);
+    char* path = get_requested_resource_path(request);
+    pthread_mutex_unlock(&mutex);
 
-    open_webserver();
-    return 0;
+    printf("PATH:\n%s\n", path);
+
+    pthread_mutex_lock(&mutex);
+    char* response = create_response(path);
+    pthread_mutex_unlock(&mutex);
+
+    send(client_file_descriptor, response, sizeof(char) * strlen(response), 0);
+
+    pthread_mutex_lock(&mutex);
+    free(request);
+    free(response);
+    pthread_mutex_unlock(&mutex);
+
+    return NULL;
 }
