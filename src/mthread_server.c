@@ -44,8 +44,12 @@ int open_webserver() {
         if (sfd < 0) {
             continue;
         }
-        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &(int){1},
-                       sizeof(int)) < 0)
+        struct linger linger_opt;
+        linger_opt.l_onoff = 1;
+        linger_opt.l_linger = 0;  // immediate close
+
+        if (setsockopt(sfd, SOL_SOCKET, SO_LINGER, &linger_opt,
+                       sizeof(linger_opt)) < 0)
             return -1;
         if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0) {
             break;

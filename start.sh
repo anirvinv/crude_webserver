@@ -3,17 +3,17 @@
 FLAG=false
 
 if [ "$1" = "M" ]; then
-    make && ./builds/mthread_server.out
+    make && ./builds/mthread_server
 elif [ "$1" = "S" ]; then
-    make && ./builds/mthread_server.out
+    make && ./builds/mthread_server
 elif [ "$1" = "TM" ]; then
     make
-    ./builds/mthread_server.out &
+    ./builds/mthread_server &
     sleep 1 && ./runtests.sh
     FLAG=true
 elif [ "$1" = "TS" ]; then
     make
-    ./builds/sthread_server.out &
+    ./builds/sthread_server &
     sleep 1 && ./runtests.sh
     FLAG=true
 else
