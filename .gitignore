@@ -1,2 +1,3 @@
-builds/*.out
+builds/mthread_server
+builds/sthread_server
 .vscode/
