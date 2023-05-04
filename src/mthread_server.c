@@ -69,14 +69,12 @@ int open_webserver() {
 
     server_file_descriptor = sfd;
 
-    struct sockaddr addr;
-    socklen_t addrlen;
-    int cfd;
-
     pthread_t worker_threads[100];
     int worker_thread_ptr = 0;
 
     while (!sig_recieved) {
+        struct sockaddr addr;
+        socklen_t addrlen;
         int cfd = accept(sfd, &addr, &addrlen);
         if (cfd == -1) {
             exit(EXIT_FAILURE);
