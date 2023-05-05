@@ -22,6 +22,6 @@ jobs:
       - name: permissions
         run: chmod +x start.sh
       - name: test singlethreaded server
-        run: ./start TS
+        run: ./start.sh TS
       - name: test multithreaded server
-        run: ./start TM
+        run: ./start.sh TM
