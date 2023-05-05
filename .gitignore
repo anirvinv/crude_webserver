@@ -1,3 +1,4 @@
 builds/mthread_server
 builds/sthread_server
 .vscode/
+tests/venv/

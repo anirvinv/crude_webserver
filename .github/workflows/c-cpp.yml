@@ -2,16 +2,26 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: make all
-      run: make all
-    - name: make clean
-      run: make clean
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: make all
+        run: make all
+      - name: pip
+        run: pip install -r tests/requirements.txt
+      - name: permissions
+        run: chmod +x start.sh
+      - name: test singlethreaded server
+        run: ./start TS
+      - name: test multithreaded server
+        run: ./start TM
