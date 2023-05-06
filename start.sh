@@ -5,10 +5,10 @@ if [ "$1" = "M" ]; then
 elif [ "$1" = "S" ]; then
     ./builds/mthread_server
 elif [ "$1" = "TM" ]; then
-    ./builds/mthread_server &
+    ./builds/mthread_server >/dev/null 2>&1 &
     sleep 1 && python tests/client.py && kill -s SIGINT %1
 elif [ "$1" = "TS" ]; then
-    ./builds/sthread_server &
+    ./builds/sthread_server >/dev/null 2>&1 &
     sleep 1 && python tests/client.py && kill -s SIGINT %1
 else
     echo "Please check the readme on how to use this script"
